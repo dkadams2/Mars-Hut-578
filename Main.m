@@ -1,63 +1,28 @@
-%ME 578 Project Main 
+%ME 578 - Mars Hut Project
 %Derrik Adams
-%4/3/18
-%ALL UNITS ARE IN METERS
-% clear all;
-% clc;
-function [Habitat_material_volume] = Main(people, duration, lab_equip)
-%Get number of people and mission duration. This will come from JMP GUI
-%input. Mission duration will be time on Mars not including the travel time
-%to get there.
-% people = input('Number of People: ');
-% duration = input('Mission Duration (weeks): ');
-% lab_equip = input('Number of Lab Equipment: ');
-wall_thickness = .05;
+%4/5/18
+%Main script to take in user input from JMP and call cal_main to compute
+%the total material needed for the entire habitat, the total cost of
+%acquiring and shipping it, and to obtain the number and dimensions of each
+%type of dome in the structure
+clear all
+% DOE = dlmread('Habitat_DOE.txt');
+% people = DOE(:,1);
+% duration = DOE(:,2);
+% lab_equip = DOE(:,3);
+% for i = 1:length(people)
+%     [Habitat_material_volume(i), Total_cost(i), Num_Farm_Domes, Num_Lab_Domes, Num_Storage_Domes,... 
+%     Radius_Farm, Radius_Lab, Radius_Storage, Tube_Length, Tube_Radius, Barracks_Length, Barracks_Width, Barracks_Height] = cal_main(people(i),duration(i),lab_equip(i));
+% end
+% x = 1:1:i;
+% Habitat_material_volume = Habitat_material_volume';
+% Total_cost = Total_cost';
+% plot(x,Habitat_material);
 
-%Based on input, calculate the volume per person needed using JMP model
-vol_pp = 3+.2*duration;
-
-%Calculate the Required LAB AREA (m^2)
-lab_area = cal_lab_size(people, lab_equip);
-
-%Calculate the required FARM AREA. If mission is less than 6 months, then a
-%farm is unnecessary (m^2)
-if duration > 24
-    farm_area = people*62;
-else
-    farm_area = 0;
-end
-
-%Calculate initial/total food supply
-vol_per_meal = .3*.15*.03;
-vol_per_day_pp = 3*vol_per_meal;
-vol_food4trip = vol_per_day_pp*people*270; %Trip is approximately 9 months
-
-if duration > 24
-   vol_food_mars = vol_per_day_pp*people*(24*7); %This is a 6-month supply of food assuming they can grow their own
-   vol_food = vol_food_mars+vol_food4trip;
-else
-    vol_food_mars = vol_per_day_pp*people*duration*7; %Take all the food they need if not growing any
-    vol_food = vol_food_mars+vol_food4trip;
-end
-
-%Call function to calculate the needed volume of material to build the
-%farm, lab, and storage dome along with the connecting tubes
-[opt_num_farm_domes, opt_num_lab_domes, opt_num_storage_domes, farm_rad, lab_rad, storage_rad, tube_length, tube_rad, fls_material_vol] = cal_habitat_size(farm_area, lab_area, wall_thickness, vol_food);
+people = input('Number of People: ');
+duration = input('Mission Duration (weeks): ');
+lab_equip = input('Number of Lab Equipment: ');
 
 
-%Call MIDACO to optimize the living space
-executable = 'Mars_Habitat_Optimizer.exe %d %d %d';
-exe_run = sprintf(executable, people, wall_thickness, vol_pp);
-habitat_info = system(exe_run);
-
-%Read in the data from the optimization run
-barracks_data = dlmread('Optimized_Habitat.txt');
-barracks_length = barracks_data(1);
-barracks_width = barracks_data(2);
-barracks_height = barracks_data(3);
-barracks_material_vol = barracks_data(4);
-
-%Calculate the total volume of habitat material needed for the entire
-%structure
-Habitat_material_volume = barracks_material_vol + fls_material_vol;
-end
+[Habitat_material_volume, Total_cost, Num_Farm_Domes, Num_Lab_Domes, Num_Storage_Domes,... 
+    Radius_Farm, Radius_Lab, Radius_Storage, Tube_Length, Tube_Radius, Barracks_Length, Barracks_Width, Barracks_Height] = cal_main(people,duration,lab_equip);
